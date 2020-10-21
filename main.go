@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 )
@@ -13,6 +12,7 @@ type result struct {
 	Response *http.Response `json:"response"`
 }
 
+// Websites Want to share this variable with test
 var websites = []string{
 	"https://www.google.com",
 	"https://www.facebook.com",
@@ -24,28 +24,19 @@ var websites = []string{
 	"https://www.merojobs.com",
 	"https://www.twitter.com",
 	"https://www.tiktok.com",
-	"https://www.hainaw.com", //This website takes forever to Load
+	"https://www.hoina.com",
 }
 
-var totalSitesToVisit = len(websites)
-
 func main() {
-	done := make(chan result)
+	done := PassData(websites)
+	success, failure := ShowResult(done)
+	fmt.Println("success 👌", success)
+	fmt.Println("failure ❌", failure)
+}
+
+func ShowResult(done chan result) (s, f int) {
 	var wg sync.WaitGroup
-
-	for _, site := range websites {
-		wg.Add(1)
-		go checkStatus(done, site, &wg)
-	}
-
 	var success, failure int
-
-	// Wait for the pending operations and close chancel when done
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
 	for result := range done {
 		wg.Add(1)
 		if result.Error != nil {
@@ -53,12 +44,25 @@ func main() {
 			continue
 		}
 		success++
-		if totalSitesToVisit == 0 {
-			fmt.Printf("Number of Successful Call Made to Website %d\n", success)
-			fmt.Printf("Number of UnSuccessful Call Made to Website %d\n", failure)
-			os.Exit(0)
-		}
 	}
+	return success, failure
+}
+
+func PassData(sites []string) (do chan result) {
+	done := make(chan result)
+	var wg sync.WaitGroup
+	for _, site := range sites {
+		wg.Add(1)
+		go checkStatus(done, site, &wg)
+	}
+
+	// Wait for the pending operations and close chancel when done
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	return done
 }
 
 func checkStatus(done chan result, url string, wg *sync.WaitGroup) {
@@ -75,5 +79,4 @@ func checkStatus(done chan result, url string, wg *sync.WaitGroup) {
 	} else {
 		done <- result{Error: nil, Response: resp}
 	}
-	totalSitesToVisit--
 }
