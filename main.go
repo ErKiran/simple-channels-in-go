@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"sync"
 )
 
 type result struct {
-	Error    error
-	Response *http.Response
+	Error    error          `json:"error"`
+	Response *http.Response `json:"response"`
 }
 
-var urls = []string{
+var websites = []string{
 	"https://www.google.com",
 	"https://www.facebook.com",
 	"https://www.xainaw.com",
@@ -21,47 +23,50 @@ var urls = []string{
 	"https://www.merojobs.com",
 	"https://www.twitter.com",
 	"https://www.tiktok.com",
-	"https://www.hoina.com",
+	// "https://www.hoinawwww.com",
 }
 
 func main() {
-	checkStatus := func(done <-chan result, urls ...string) <-chan result {
-		results := make(chan result)
+	done := make(chan result)
+	var wg sync.WaitGroup
 
-		go func() {
-			defer close(results)
-
-			for _, url := range urls {
-				var res result
-				resp, err := http.Get(url)
-				res = result{
-					Error:    err,
-					Response: resp,
-				}
-				select {
-				case <-done:
-					return
-				case results <- res:
-				}
-			}
-		}()
-		return results
+	for _, site := range websites {
+		wg.Add(1)
+		go checkStatus(done, site, &wg)
 	}
 
-	done := make(chan result)
+	var success, failure, count int
 
-	defer close(done)
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
 
-	var success, failure int
-
-	for result := range checkStatus(done, urls...) {
+	for result := range done {
+		count++
+		wg.Add(1)
 		if result.Error != nil {
 			failure++
 			continue
 		}
 		success++
-	}
 
-	fmt.Printf("Number of Successful Call Made to Website %d\n", success)
-	fmt.Printf("Number of UnSuccessful Call Made to Website %d\n", failure)
+		if count == len(websites) {
+			fmt.Printf("Number of Successful Call Made to Website %d\n", success)
+			fmt.Printf("Number of UnSuccessful Call Made to Website %d\n", failure)
+			os.Exit(0)
+		}
+	}
+}
+
+func checkStatus(done chan result, url string, wg *sync.WaitGroup) {
+	defer (*wg).Done()
+
+	resp, err := http.Get(url)
+
+	if err != nil {
+		done <- result{Error: err, Response: resp}
+	} else {
+		done <- result{Error: nil, Response: resp}
+	}
 }
