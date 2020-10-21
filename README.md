@@ -12,14 +12,9 @@ UnSuccessful count => 15
 
 #### Description 
 
-* `checkStatus` function returns a channel that can be read from to retrieve results of an iteration of our loop
+##### Pervious version was blocking so it was slow. It lacks concurrency. 
 
-* We make results channel with make keyword. 
+In this version we don't wait for one operations to finish we don't defer our worker thread. 
 
-* We create another anyomous fuction which loops over the supplied Website url's.
+ALL error or success response is passed to the done channel and we loops the channel to get count. 
 
-* Then the result of out put is assigned to `result` type.
-
-* We then write the `res` result to channel.
-
-* We then loops to `checkStatus` function and count the success and failure's. And print result to console.
