@@ -18,3 +18,6 @@ In this version we don't wait for one operations to finish we don't defer our wo
 
 ALL error or success response is passed to the done channel and we loops the channel to get count. 
 
+#### For Unit Testing 
+`go get "github.com/stretchr/testify/assert"`
+`go test`

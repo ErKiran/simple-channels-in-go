@@ -8,11 +8,10 @@ import (
 )
 
 type result struct {
-	Error    error          `json:"error"`
-	Response *http.Response `json:"response"`
+	Error    error
+	Response *http.Response
 }
 
-// Websites Want to share this variable with test
 var websites = []string{
 	"https://www.google.com",
 	"https://www.facebook.com",
