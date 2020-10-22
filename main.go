@@ -34,10 +34,8 @@ func main() {
 }
 
 func ShowResult(done chan result) (s, f int) {
-	var wg sync.WaitGroup
 	var success, failure int
 	for result := range done {
-		wg.Add(1)
 		if result.Error != nil {
 			failure++
 			continue
